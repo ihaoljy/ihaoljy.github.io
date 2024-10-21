@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App Store Search</title>
-    <link rel="icon" href="https://apple.com/favicon.ico" type="image/x-icon"> <!-- App Store 的图标 -->
+    <link rel="icon" href="https://apple.com/favicon.ico" type="image/x-icon">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,7 +20,7 @@
         }
         main {
             padding: 20px;
-            text-align: center; /* 所有内容居中 */
+            text-align: center;
         }
         .search-container {
             margin-bottom: 20px;
@@ -30,14 +30,14 @@
         input[type="text"] {
             padding: 10px;
             margin: 5px;
-            width: calc(100% - 22px); /* 留出边距 */
-            max-width: 300px; /* 最大宽度 */
-            box-sizing: border-box; /* 包含内边距和边框 */
+            width: calc(100% - 22px);
+            max-width: 300px;
+            box-sizing: border-box;
         }
         select {
             padding: 10px;
             margin: 5px;
-            box-sizing: border-box; /* 包含内边距和边框 */
+            box-sizing: border-box;
         }
         button {
             padding: 10px;
@@ -45,8 +45,8 @@
             color: white;
             border: none;
             cursor: pointer;
-            width: 100%; /* 按钮全宽 */
-            max-width: 120px; /* 最大宽度 */
+            width: 100%;
+            max-width: 120px;
         }
         button:hover {
             background-color: #005bb5;
@@ -55,14 +55,14 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            table-layout: auto; /* 自动调整列宽 */
-            display: none; /* 默认隐藏表格 */
+            table-layout: auto;
+            display: none;
         }
         th, td {
             border: 1px solid #ccc;
             padding: 10px;
-            text-align: center; /* 表格内容居中 */
-            cursor: pointer; /* 鼠标指针样式 */
+            text-align: center;
+            cursor: pointer;
         }
         th {
             background-color: #f0f0f0;
@@ -70,12 +70,12 @@
         img {
             width: 50px;
             height: 50px;
-            border-radius: 10px; /* 圆角方形剪裁 */
+            border-radius: 10px;
         }
         .version-list {
             margin-top: 10px;
-            display: none; /* 默认隐藏 */
-            text-align: left; /* 版本列表文本左对齐 */
+            display: none;
+            text-align: left;
         }
         footer {
             text-align: center;
@@ -84,13 +84,12 @@
             color: #777;
         }
 
-        /* 媒体查询 */
         @media (max-width: 600px) {
             th, td {
-                font-size: 14px; /* 字体大小适应小屏幕 */
+                font-size: 14px;
             }
             input[type="text"], select, button {
-                font-size: 14px; /* 字体大小适应小屏幕 */
+                font-size: 14px;
             }
         }
     </style>
@@ -113,8 +112,8 @@
                 <tr>
                     <th>图标</th>
                     <th>应用名称</th>
-                    <th>App ID</th> <!-- App ID 放前面 -->
                     <th>Bundle ID</th>
+                    <th>App ID</th>
                     <th>版本号</th>
                     <th>版本 ID</th>
                     <th>发布日期</th>
@@ -143,23 +142,24 @@
             const versionList = document.getElementById('versionList');
             const appListTable = document.getElementById('appList');
 
-            tbody.innerHTML = ''; // 清空之前的搜索结果
-            versionDetails.style.display = 'none'; // 隐藏版本列表
-            versionList.innerHTML = ''; // 清空版本列表
+            tbody.innerHTML = '';
+            versionDetails.style.display = 'none';
+            versionList.innerHTML = '';
 
-            const url = `https://itunes.apple.com/search?term=${encodeURIComponent(searchQuery)}&country=${countryCode}&entity=software`;
+            // 使用 CORS 代理
+            const url = `https://cors-anywhere.herokuapp.com/https://itunes.apple.com/search?term=${encodeURIComponent(searchQuery)}&country=${countryCode}&entity=software`;
 
             fetch(url)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('网络响应不正确');
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data.resultCount === 0) {
                         tbody.innerHTML = "<tr><td colspan='7'>未找到应用</td></tr>";
-                        appListTable.style.display = 'table'; // 确保表格显示
+                        appListTable.style.display = 'table';
                         return;
                     }
 
@@ -168,8 +168,8 @@
                         row.innerHTML = `
                             <td><img src="${app.artworkUrl100}" alt="${app.trackName}"></td>
                             <td><a href="${app.trackViewUrl}" target="_blank">${app.trackName}</a></td>
-                            <td class="copy" data-text="${app.trackId}">${app.trackId}</td> <!-- App ID 放前面 -->
                             <td class="copy" data-text="${app.bundleId || 'N/A'}">${app.bundleId || 'N/A'}</td>
+                            <td class="copy" data-text="${app.trackId}">${app.trackId}</td>
                             <td><button class="versionButton" data-app="${app.trackId}">${app.version}</button></td>
                             <td class="copy" data-text="${app.trackId}">${app.trackId}</td>
                             <td>${new Date(app.currentVersionReleaseDate).toLocaleDateString()}</td>
@@ -177,9 +177,8 @@
                         tbody.appendChild(row);
                     });
 
-                    appListTable.style.display = 'table'; // 显示表格
+                    appListTable.style.display = 'table';
 
-                    // 绑定点击复制事件
                     document.querySelectorAll('.copy').forEach(cell => {
                         cell.addEventListener('click', function() {
                             const textToCopy = this.getAttribute('data-text');
@@ -193,7 +192,6 @@
                         });
                     });
 
-                    // 绑定历史版本按钮点击事件
                     document.querySelectorAll('.versionButton').forEach(button => {
                         button.addEventListener('click', function() {
                             const appId = this.getAttribute('data-app');
@@ -202,8 +200,8 @@
                                 .then(appData => {
                                     if (appData.results.length > 0) {
                                         versionDetails.style.display = 'block';
-                                        versionList.innerHTML = ''; // 清空历史版本列表
-                                        const versionHistory = appData.results[0].versionHistory || []; // 假设 API 返回了版本历史
+                                        versionList.innerHTML = '';
+                                        const versionHistory = appData.results[0].versionHistory || [];
 
                                         versionHistory.forEach(version => {
                                             versionList.innerHTML += `<li>${version.version} - ${new Date(version.releaseDate).toLocaleDateString()}</li>`;
@@ -215,8 +213,8 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    tbody.innerHTML = "<tr><td colspan='7'>搜索失败，请稍后重试</td></tr>";
-                    appListTable.style.display = 'table'; // 确保表格显示
+                    tbody.innerHTML = "<tr><td colspan='7'>搜索失败，请稍后重试: " + error.message + "</td></tr>";
+                    appListTable.style.display = 'table';
                 });
         }
 
@@ -227,9 +225,7 @@
             footer.innerHTML = `© ${formattedDate} 软件详情 | Powered by Drillring`;
         }
 
-        // 每秒更新时间
         setInterval(updateFooter, 1000);
-        // 初始更新
         updateFooter();
 
         document.getElementById('searchButton').addEventListener('click', searchApp);
