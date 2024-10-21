@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Store Search</title>
+    <link rel="icon" href="https://apple.com/favicon.ico" type="image/x-icon"> <!-- App Store 的图标 -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #007aff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        main {
+            padding: 20px;
+            text-align: center; /* 所有内容居中 */
+        }
+        .search-container {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            margin: 5px;
+            width: calc(100% - 22px); /* 留出边距 */
+            max-width: 300px; /* 最大宽度 */
+            box-sizing: border-box; /* 包含内边距和边框 */
+        }
+        select {
+            padding: 10px;
+            margin: 5px;
+            box-sizing: border-box; /* 包含内边距和边框 */
+        }
+        button {
+            padding: 10px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%; /* 按钮全宽 */
+            max-width: 120px; /* 最大宽度 */
+        }
+        button:hover {
+            background-color: #005bb5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: auto; /* 自动调整列宽 */
+            display: none; /* 默认隐藏表格 */
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center; /* 表格内容居中 */
+            cursor: pointer; /* 鼠标指针样式 */
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        img {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px; /* 圆角方形剪裁 */
+        }
+        .version-list {
+            margin-top: 10px;
+            display: none; /* 默认隐藏 */
+            text-align: left; /* 版本列表文本左对齐 */
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        /* 媒体查询 */
+        @media (max-width: 600px) {
+            th, td {
+                font-size: 14px; /* 字体大小适应小屏幕 */
+            }
+            input[type="text"], select, button {
+                font-size: 14px; /* 字体大小适应小屏幕 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>App Store Search</h1>
+    </header>
+    <main>
+        <div class="search-container">
+            <input type="text" id="appSearch" placeholder="搜索应用...">
+            <select id="countrySelect">
+                <option value="us">US</option>
+                <option value="cn">CN</option>
+            </select>
+            <button id="searchButton">搜索</button>
+        </div>
+        <table id="appList">
+            <thead>
+                <tr>
+                    <th>图标</th>
+                    <th>应用名称</th>
+                    <th>App ID</th> <!-- App ID 放前面 -->
+                    <th>Bundle ID</th>
+                    <th>版本号</th>
+                    <th>版本 ID</th>
+                    <th>发布日期</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 搜索结果将插入此处 -->
+            </tbody>
+        </table>
+        <div id="versionDetails" class="version-list">
+            <h3>历史版本:</h3>
+            <ul id="versionList"></ul>
+        </div>
+    </main>
+
+    <footer id="footer">
+        <!-- 动态日期和时间将在此插入 -->
+    </footer>
+
+    <script>
+        function searchApp() {
+            const searchQuery = document.getElementById('appSearch').value;
+            const countryCode = document.getElementById('countrySelect').value;
+            const tbody = document.getElementById('appList').querySelector('tbody');
+            const versionDetails = document.getElementById('versionDetails');
+            const versionList = document.getElementById('versionList');
+            const appListTable = document.getElementById('appList');
+
+            tbody.innerHTML = ''; // 清空之前的搜索结果
+            versionDetails.style.display = 'none'; // 隐藏版本列表
+            versionList.innerHTML = ''; // 清空版本列表
+
+            const url = `https://itunes.apple.com/search?term=${encodeURIComponent(searchQuery)}&country=${countryCode}&entity=software`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正确');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.resultCount === 0) {
+                        tbody.innerHTML = "<tr><td colspan='7'>未找到应用</td></tr>";
+                        appListTable.style.display = 'table'; // 确保表格显示
+                        return;
+                    }
+
+                    data.results.forEach(app => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><img src="${app.artworkUrl100}" alt="${app.trackName}"></td>
+                            <td><a href="${app.trackViewUrl}" target="_blank">${app.trackName}</a></td>
+                            <td class="copy" data-text="${app.trackId}">${app.trackId}</td> <!-- App ID 放前面 -->
+                            <td class="copy" data-text="${app.bundleId || 'N/A'}">${app.bundleId || 'N/A'}</td>
+                            <td><button class="versionButton" data-app="${app.trackId}">${app.version}</button></td>
+                            <td class="copy" data-text="${app.trackId}">${app.trackId}</td>
+                            <td>${new Date(app.currentVersionReleaseDate).toLocaleDateString()}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+
+                    appListTable.style.display = 'table'; // 显示表格
+
+                    // 绑定点击复制事件
+                    document.querySelectorAll('.copy').forEach(cell => {
+                        cell.addEventListener('click', function() {
+                            const textToCopy = this.getAttribute('data-text');
+                            navigator.clipboard.writeText(textToCopy)
+                                .then(() => {
+                                    alert('已复制: ' + textToCopy);
+                                })
+                                .catch(err => {
+                                    console.error('复制失败: ', err);
+                                });
+                        });
+                    });
+
+                    // 绑定历史版本按钮点击事件
+                    document.querySelectorAll('.versionButton').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const appId = this.getAttribute('data-app');
+                            fetch(`https://itunes.apple.com/lookup?id=${appId}`)
+                                .then(response => response.json())
+                                .then(appData => {
+                                    if (appData.results.length > 0) {
+                                        versionDetails.style.display = 'block';
+                                        versionList.innerHTML = ''; // 清空历史版本列表
+                                        const versionHistory = appData.results[0].versionHistory || []; // 假设 API 返回了版本历史
+
+                                        versionHistory.forEach(version => {
+                                            versionList.innerHTML += `<li>${version.version} - ${new Date(version.releaseDate).toLocaleDateString()}</li>`;
+                                        });
+                                    }
+                                });
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    tbody.innerHTML = "<tr><td colspan='7'>搜索失败，请稍后重试</td></tr>";
+                    appListTable.style.display = 'table'; // 确保表格显示
+                });
+        }
+
+        function updateFooter() {
+            const footer = document.getElementById('footer');
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            footer.innerHTML = `© ${formattedDate} 软件详情 | Powered by Drillring`;
+        }
+
+        // 每秒更新时间
+        setInterval(updateFooter, 1000);
+        // 初始更新
+        updateFooter();
+
+        document.getElementById('searchButton').addEventListener('click', searchApp);
+        document.getElementById('appSearch').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchApp();
+            }
+        });
+    </script>
+</body>
+</html>
